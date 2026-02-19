@@ -5,6 +5,7 @@
 	import ModeSwitch from '$lib/components/ModeSwitch.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import { AbsenceType, Duration } from '$lib/domain/types';
+	import { base } from '$app/paths';
 
 	// Helper to get entry for employee
 	function getEntry(acc: any, empId: string) {
