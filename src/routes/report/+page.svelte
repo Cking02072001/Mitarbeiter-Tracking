@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { appState } from '$lib/state.svelte';
-	import { generateReport } from '$lib/report/pdf';
 	import { dbService } from '$lib/db';
 	import { format } from 'date-fns';
 	import { de } from 'date-fns/locale';
+	import ExportImport from '$lib/components/ExportImport.svelte';
 
 	let month = $state(new Date().getMonth() + 1);
 	let year = $state(new Date().getFullYear());
