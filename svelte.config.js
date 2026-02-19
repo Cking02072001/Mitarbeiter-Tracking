@@ -9,7 +9,7 @@ const config = {
 			fallback: '404.html'
 		}),
 		paths: {
-			base: process.env.BASE_PATH || '/Mitarbeiter-Tracking'
+			base: process.env.ADAPTER_BASE ?? (process.env.BASE_PATH || '/Mitarbeiter-Tracking')
 		}
 	}
 };
