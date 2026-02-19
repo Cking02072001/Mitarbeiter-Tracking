@@ -5,4 +5,4 @@ node_modules
 .svelte-kit
 build/
 dist/
-package-lock.json
+
