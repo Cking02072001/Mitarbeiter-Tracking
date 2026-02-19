@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { appState } from '$lib/state.svelte';
-	import { generateReport } from '$lib/report/pdf';
+	import { generateAllReportsZip } from '$lib/report/pdf';
 	import { dbService } from '$lib/db';
 	import { format } from 'date-fns';
 	import { de } from 'date-fns/locale';
 	import ExportImport from '$lib/components/ExportImport.svelte';
+	import { Loader2 } from 'lucide-svelte';
 
 	let month = $state(new Date().getMonth() + 1);
 	let year = $state(new Date().getFullYear());
@@ -15,27 +16,25 @@
 		label: format(new Date(2000, i, 1), 'MMMM', { locale: de })
 	}));
 
-	async function downloadPdf() {
+	async function downloadZip() {
 		loading = true;
 		try {
-			// Fetch data fresh from DB to be sure
 			const entries = await dbService.getEntriesByMonth(year, month);
 			const employees = await dbService.getEmployees();
 
-			const pdfBytes = await generateReport(year, month, employees, entries);
+			const blob = await generateAllReportsZip(year, month, employees, entries);
 
-			const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `abwesenheiten_${year}-${String(month).padStart(2, '0')}.pdf`;
+			a.download = `Abwesenheiten_${year}-${String(month).padStart(2, '0')}.zip`;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
 		} catch (e) {
 			console.error(e);
-			alert('Fehler beim Erstellen des PDFs');
+			alert('Fehler beim Erstellen des ZIP-Archivs');
 		} finally {
 			loading = false;
 		}
@@ -44,7 +43,7 @@
 
 <div class="report-page">
 	<header>
-		<a href="/">← Zurück</a>
+		<a href="/" class="back-link">← Zurück</a>
 		<h1>Report erstellen</h1>
 	</header>
 
@@ -63,13 +62,19 @@
 			<input type="number" id="year" bind:value={year} />
 		</div>
 
-		<button onclick={downloadPdf} disabled={loading} class="btn-primary">
-			{loading ? 'Generiere...' : 'PDF Herunterladen'}
+		<button onclick={downloadZip} disabled={loading} class="btn-primary">
+			{#if loading}
+				<Loader2 class="animate-spin" size={20} /> Generiere...
+			{:else}
+				ZIP Herunterladen (Alle Mitarbeiter)
+			{/if}
 		</button>
+
+		<ExportImport />
 	</div>
 </div>
 
-<style>
+<style lang="scss">
 	.report-page {
 		padding: 1rem;
 		max-width: 600px;
@@ -77,6 +82,12 @@
 	}
 	header {
 		margin-bottom: 2rem;
+		.back-link {
+			font-weight: 500;
+			color: #6b7280;
+			margin-bottom: 0.5rem;
+			display: block;
+		}
 	}
 	.card {
 		background: white;
@@ -100,22 +111,42 @@
 		border: 1px solid #d1d5db;
 		border-radius: 6px;
 		font-size: 1rem;
+		background: #fff;
 	}
 	.btn-primary {
 		width: 100%;
-		padding: 0.75rem;
+		padding: 1rem;
 		background: #2563eb;
 		color: white;
 		font-weight: 600;
-		border-radius: 6px;
+		border-radius: 8px;
 		border: none;
 		cursor: pointer;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
+		transition: background 0.2s;
+
 		&:hover {
 			background: #1d4ed8;
 		}
 		&:disabled {
 			opacity: 0.7;
 			cursor: not-allowed;
+		}
+
+		:global(.animate-spin) {
+			animation: spin 1s linear infinite;
+		}
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
 		}
 	}
 </style>
