@@ -23,6 +23,10 @@
 		return Array.from({ length: days }, (_, i) => i + 1);
 	}
 
+	function getWeekdayLabel(y: number, m: number, d: number) {
+		return format(new Date(y, m, d), 'EE', { locale: de });
+	}
+
 	async function load() {
 		const entries = await dbService.getEntriesByMonth(year, month + 1);
 		appState.entries = entries;
@@ -129,7 +133,12 @@
 				<tr>
 					<th class="sticky-col">Mitarbeiter</th>
 					{#each getDayLabels(year, month) as d}
-						<th>{d}</th>
+						<th class:weekend={['Sa', 'So'].includes(getWeekdayLabel(year, month, d))}>
+							<div class="th-content">
+								<span class="weekday">{getWeekdayLabel(year, month, d)}</span>
+								<span class="day-num">{d}</span>
+							</div>
+						</th>
 					{/each}
 				</tr>
 			</thead>
@@ -216,6 +225,27 @@
 		font-weight: 600;
 		min-width: 120px;
 		border-right: 2px solid #e5e7eb;
+	}
+
+	.th-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		line-height: 1.1;
+		padding: 2px 0;
+	}
+	.weekday {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		color: #6b7280;
+	}
+	.day-num {
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+	th.weekend {
+		background-color: #f9fafb;
+		color: #ef4444; /* Highlight weekends slightly */
 	}
 
 	.cell {
