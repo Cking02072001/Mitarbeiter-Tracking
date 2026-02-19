@@ -6,6 +6,7 @@
 	import { de } from 'date-fns/locale';
 	import ExportImport from '$lib/components/ExportImport.svelte';
 	import { Loader2 } from 'lucide-svelte';
+	import { base } from '$app/paths';
 
 	let month = $state(new Date().getMonth() + 1);
 	let year = $state(new Date().getFullYear());
@@ -43,7 +44,7 @@
 
 <div class="report-page">
 	<header>
-		<a href="/" class="back-link">← Zurück</a>
+		<a href="{base}/" class="back-link">← Zurück</a>
 		<h1>Report erstellen</h1>
 	</header>
 

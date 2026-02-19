@@ -24,9 +24,9 @@
 			</button>
 			<!-- Navigation Links could go here or in a sidebar/menu -->
 			<nav>
-				<a href="/month" class="nav-link">Monat</a>
-				<a href="/report" class="nav-link">Report</a>
-				<a href="/employees" class="nav-link">Mitarbeiter</a>
+				<a href="{base}/month" class="nav-link">Monat</a>
+				<a href="{base}/report" class="nav-link">Report</a>
+				<a href="{base}/employees" class="nav-link">Mitarbeiter</a>
 			</nav>
 		</div>
 	</header>

@@ -3,6 +3,7 @@
 	import { dbService } from '$lib/db';
 	import { type Employee } from '$lib/domain/types';
 	import { v4 as uuidv4 } from 'uuid';
+	import { base } from '$app/paths';
 
 	let newName = $state('');
 
@@ -51,7 +52,7 @@
 
 <div class="employees-page">
 	<header>
-		<a href="/">← Zurück</a>
+		<a href="{base}/">← Zurück</a>
 		<h1>Mitarbeiter verwalten</h1>
 	</header>
 

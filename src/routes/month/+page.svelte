@@ -5,6 +5,7 @@
 	import { AbsenceType, Duration } from '$lib/domain/types';
 	import { dbService } from '$lib/db';
 	import { v4 as uuidv4 } from 'uuid';
+	import { base } from '$app/paths';
 
 	let month = $state(new Date().getMonth());
 	let year = $state(new Date().getFullYear());
@@ -109,7 +110,7 @@
 <div class="month-view">
 	<header>
 		<div class="header-left">
-			<a href="/" class="back-link">← Zurück</a>
+			<a href="{base}/" class="back-link">← Zurück</a>
 			<h1>Monatsansicht</h1>
 		</div>
 		<div class="controls">
