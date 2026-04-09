@@ -15,6 +15,7 @@
 	let startDate = $state(format(startOfMonth, 'yyyy-MM-dd'));
 	let endDate = $state(format(endOfMonth, 'yyyy-MM-dd'));
 	let loading = $state(false);
+	let reportMode = $state<'custom' | 'employee'>('custom');
 
 	async function downloadZip() {
 		loading = true;
@@ -23,7 +24,7 @@
 			const allEntries = await dbService.getAllEntries();
 			const employees = await dbService.getEmployees();
 
-			const blob = await generateAllReportsZip(startDate, endDate, employees, entries, allEntries);
+			const blob = await generateAllReportsZip(startDate, endDate, employees, entries, allEntries, reportMode);
 
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -50,12 +51,22 @@
 
 	<div class="card">
 		<div class="form-group">
-			<label for="startDate">Startdatum</label>
-			<input type="date" id="startDate" bind:value={startDate} />
+			<label for="reportMode">Welchen Zeitraum möchtest du exportieren?</label>
+			<select id="reportMode" bind:value={reportMode}>
+				<option value="custom">Gleicher fix definierter Datums-Bereich für alle</option>
+				<option value="employee">Ab "Erster Arbeitstag" pro Mitarbeiter</option>
+			</select>
 		</div>
 
+		{#if reportMode === 'custom'}
+			<div class="form-group">
+				<label for="startDate">Startdatum</label>
+				<input type="date" id="startDate" bind:value={startDate} />
+			</div>
+		{/if}
+
 		<div class="form-group">
-			<label for="endDate">Enddatum</label>
+			<label for="endDate">{reportMode === 'custom' ? 'Enddatum' : 'Saisonende (Stichtag, falls kein Enddatum beim MA angegeben)'}</label>
 			<input type="date" id="endDate" bind:value={endDate} />
 		</div>
 

@@ -321,20 +321,32 @@ export async function generateAllReportsZip(
     endDate: string,
     employees: Employee[],
     entries: AbsenceEntry[],
-    allEntries?: AbsenceEntry[]
+    allEntries?: AbsenceEntry[],
+    reportMode: 'custom' | 'employee' = 'custom'
 ): Promise<Blob> {
     const zip = new JSZip();
-    const folderName = `Abwesenheiten_${startDate}_bis_${endDate}`;
+    const folderName = reportMode === 'custom' ? `Abwesenheiten_${startDate}_bis_${endDate}` : `Abwesenheiten_Pro_Mitarbeiter`;
     const folder = zip.folder(folderName);
 
     if (!folder) throw new Error("Could not create ZIP folder");
 
     for (const emp of employees) {
         if (!emp.active) continue; 
+        if (reportMode === 'employee' && !emp.firstWorkDay) continue;
 
-        const pdfBytes = await generateEmployeePdf(startDate, endDate, emp, entries, allEntries);
+        let sDate = startDate;
+        let eDate = endDate;
+        let empEntries = entries;
+
+        if (reportMode === 'employee') {
+            sDate = emp.firstWorkDay!;
+            eDate = emp.lastWorkDay || endDate;
+            empEntries = (allEntries || []).filter(e => e.date >= sDate && e.date <= eDate);
+        }
+
+        const pdfBytes = await generateEmployeePdf(sDate, eDate, emp, empEntries, allEntries);
         // Filename: Name_YYYY-MM-DD_bis_YYYY-MM-DD.pdf
-        const filename = `${emp.name.replace(/[^a-z0-9]/gi, '_')}_${startDate}_bis_${endDate}.pdf`;
+        const filename = `${emp.name.replace(/[^a-z0-9]/gi, '_')}_${sDate}_bis_${eDate}.pdf`;
         folder.file(filename, pdfBytes);
     }
 
