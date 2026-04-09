@@ -46,7 +46,29 @@ export async function generateEmployeePdf(
         size: 16,
         font: fontBold
     });
-    y -= 30;
+    y -= 20;
+
+    if (emp.jobTitle) {
+        currentPage.drawText(`Job Bezeichnung: ${emp.jobTitle}`, {
+            x: 50,
+            y,
+            size: 12,
+            font: font
+        });
+        y -= 20;
+    }
+
+    if (emp.workingHours) {
+        currentPage.drawText(`Allgemeine Arbeitszeit: ${emp.workingHours}`, {
+            x: 50,
+            y,
+            size: 12,
+            font: font
+        });
+        y -= 20;
+    }
+    
+    y -= 10;
 
     // Stats Init
     const stats: Record<AbsenceType, number> = {

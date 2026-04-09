@@ -43,9 +43,9 @@
 		await appState.refreshEmployees();
 	}
 
-	async function updateName(emp: Employee, e: Event) {
+	async function updateField(emp: Employee, field: 'name' | 'jobTitle' | 'workingHours', e: Event) {
 		const target = e.target as HTMLInputElement;
-		emp.name = target.value;
+		emp[field] = target.value;
 		await dbService.saveEmployee(JSON.parse(JSON.stringify(emp)));
 	}
 </script>
@@ -70,12 +70,29 @@
 		<ul class="list">
 			{#each appState.employees as emp, i (emp.id)}
 				<li class="item" class:inactive={!emp.active}>
-					<input
-						type="text"
-						value={emp.name}
-						onchange={(e) => updateName(emp, e)}
-						class="name-input"
-					/>
+					<div class="details">
+						<input
+							type="text"
+							value={emp.name}
+							onchange={(e) => updateField(emp, 'name', e)}
+							class="name-input"
+							placeholder="Name"
+						/>
+						<input
+							type="text"
+							value={emp.jobTitle || ''}
+							onchange={(e) => updateField(emp, 'jobTitle', e)}
+							class="sub-input"
+							placeholder="Job Bezeichnung (z.B. Kellner)"
+						/>
+						<input
+							type="text"
+							value={emp.workingHours || ''}
+							onchange={(e) => updateField(emp, 'workingHours', e)}
+							class="sub-input"
+							placeholder="Arbeitszeit (z.B. 8 - 12 Uhr)"
+						/>
+					</div>
 
 					<div class="actions">
 						<button class="icon-btn" onclick={() => move(i, 'up')} disabled={i === 0}>↑</button>
@@ -136,23 +153,45 @@
 	}
 	.item {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 0;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem 0;
 		border-bottom: 1px solid #f3f4f6;
 
 		&.inactive {
 			opacity: 0.6;
 		}
 	}
+	.details {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		flex: 1;
+	}
 	.name-input {
 		border: none;
 		background: transparent;
-		font-weight: 500;
+		font-weight: 600;
+		font-size: 1.1rem;
 		width: 100%;
+		padding: 0.25rem 0;
 		&:focus {
-			outline: 1px solid #2563eb;
-			background: white;
+			outline: none;
+			border-bottom: 1px solid #2563eb;
+		}
+	}
+	.sub-input {
+		border: none;
+		background: transparent;
+		font-size: 0.85rem;
+		color: #4b5563;
+		width: 100%;
+		padding: 0.25rem 0;
+		&:focus {
+			outline: none;
+			border-bottom: 1px solid #2563eb;
+			color: #111827;
 		}
 	}
 	.actions {

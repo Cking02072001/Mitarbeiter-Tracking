@@ -16,6 +16,8 @@ export interface Employee {
     name: string;
     active: boolean;
     sortOrder: number;
+    jobTitle?: string;
+    workingHours?: string;
 }
 
 export interface AbsenceEntry {
