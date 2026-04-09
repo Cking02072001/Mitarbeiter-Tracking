@@ -18,6 +18,8 @@ export interface Employee {
     sortOrder: number;
     jobTitle?: string;
     workingHours?: string;
+    firstWorkDay?: string;
+    lastWorkDay?: string;
 }
 
 export interface AbsenceEntry {

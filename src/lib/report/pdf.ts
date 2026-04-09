@@ -10,7 +10,8 @@ export async function generateEmployeePdf(
     startDate: string,
     endDate: string,
     emp: Employee,
-    entries: AbsenceEntry[]
+    entries: AbsenceEntry[],
+    allEntries?: AbsenceEntry[]
 ): Promise<Uint8Array> {
     const doc = await PDFDocument.create();
     let currentPage = doc.addPage();
@@ -39,8 +40,13 @@ export async function generateEmployeePdf(
 
     let y = height - 120;
 
+    // Clean strings to prevent pdf-lib crash with standard fonts
+    const safeName = (emp.name || '').replace(/[–—]/g, '-').replace(/[„“”]/g, '"');
+    const safeJobTitle = (emp.jobTitle || '').replace(/[–—]/g, '-').replace(/[„“”]/g, '"');
+    const safeWorkingHours = (emp.workingHours || '').replace(/[–—]/g, '-').replace(/[„“”]/g, '"');
+
     // Employee Name Header
-    currentPage.drawText(`Mitarbeiter: ${emp.name}`, {
+    currentPage.drawText(`Mitarbeiter: ${safeName}`, {
         x: 50,
         y,
         size: 16,
@@ -49,7 +55,7 @@ export async function generateEmployeePdf(
     y -= 20;
 
     if (emp.jobTitle) {
-        currentPage.drawText(`Job Bezeichnung: ${emp.jobTitle}`, {
+        currentPage.drawText(`Job Bezeichnung: ${safeJobTitle}`, {
             x: 50,
             y,
             size: 12,
@@ -59,7 +65,7 @@ export async function generateEmployeePdf(
     }
 
     if (emp.workingHours) {
-        currentPage.drawText(`Allgemeine Arbeitszeit: ${emp.workingHours}`, {
+        currentPage.drawText(`Allgemeine Arbeitszeit: ${safeWorkingHours}`, {
             x: 50,
             y,
             size: 12,
@@ -216,6 +222,73 @@ export async function generateEmployeePdf(
         y -= 20;
     }
 
+    // Vacation calculation
+    if (emp.firstWorkDay) {
+        if (y < 120) {
+            currentPage = doc.addPage();
+            y = height - 50;
+        }
+
+        const startCalcDt = new Date(emp.firstWorkDay);
+        let endCalcStr = endDate;
+        if (emp.lastWorkDay && emp.lastWorkDay <= endDate) {
+            endCalcStr = emp.lastWorkDay;
+        }
+        const endCalcDt = new Date(endCalcStr);
+
+        let sundayCount = 0;
+        let curr = new Date(startCalcDt);
+        while (curr <= endCalcDt) {
+            if (curr.getDay() === 0) sundayCount++;
+            curr.setDate(curr.getDate() + 1);
+        }
+
+        const relevantAllEntries = (allEntries || entries).filter(e => 
+            e.employeeId === emp.id && 
+            e.date >= emp.firstWorkDay! && 
+            e.date <= endCalcStr
+        );
+
+        let vacationTaken = 0;
+        for (const e of relevantAllEntries) {
+            if (e.category === AbsenceType.VACATION) {
+                vacationTaken += (e.duration === Duration.FULL ? 1 : 0.5);
+            }
+        }
+
+        let holidaysWorked = 0;
+        const hdCalc = new Holidays('AT');
+        let pbHols: any[] = [];
+        for (let yr = startCalcDt.getFullYear(); yr <= endCalcDt.getFullYear(); yr++) {
+            pbHols = pbHols.concat(hdCalc.getHolidays(yr).filter((h: any) => h.type === 'public'));
+        }
+
+        for (const h of pbHols) {
+            let hDateStr = '';
+            if(typeof h.start === 'string') { 
+                hDateStr = new Date(h.start).toISOString().split('T')[0];
+            } else {
+                hDateStr = format(h.start, 'yyyy-MM-dd');
+            }
+            if (hDateStr >= emp.firstWorkDay && hDateStr <= endCalcStr) {
+                const hadOff = relevantAllEntries.find(e => e.date === hDateStr && (e.category === AbsenceType.FREE || e.category === AbsenceType.VACATION));
+                if (!hadOff) holidaysWorked++;
+            }
+        }
+
+        const result = sundayCount + holidaysWorked - vacationTaken;
+        const resultText = result > 0 ? `${result} Tag(e) Resturlaub` : (result === 0 ? 'Kein Resturlaub' : `${Math.abs(result)} Tag(e) zu viel verbraucht`);
+        
+        currentPage.drawLine({ start: { x: 50, y: y + 5 }, end: { x: 550, y: y + 5 }, thickness: 1 });
+        y -= 20;
+        currentPage.drawText('Urlaubsabrechnung (Erster bis letzter Arbeitstag)', { x: 50, y, size: 12, font: fontBold });
+        y -= 20;
+        currentPage.drawText(`Berechnung: ${sundayCount} Sonntage + ${holidaysWorked} gearbeitete Feiertage - ${vacationTaken} Urlaubstage`, { x: 50, y, size: 10, font: font });
+        y -= 15;
+        currentPage.drawText(`Ergebnis: ${resultText}`, { x: 50, y, size: 12, font: fontBold, color: rgb(0.1, 0.5, 0.8) });
+        y -= 30;
+    }
+
     // Signature
     if (y < 100) {
         currentPage = doc.addPage();
@@ -247,7 +320,8 @@ export async function generateAllReportsZip(
     startDate: string,
     endDate: string,
     employees: Employee[],
-    entries: AbsenceEntry[]
+    entries: AbsenceEntry[],
+    allEntries?: AbsenceEntry[]
 ): Promise<Blob> {
     const zip = new JSZip();
     const folderName = `Abwesenheiten_${startDate}_bis_${endDate}`;
@@ -258,7 +332,7 @@ export async function generateAllReportsZip(
     for (const emp of employees) {
         if (!emp.active) continue; 
 
-        const pdfBytes = await generateEmployeePdf(startDate, endDate, emp, entries);
+        const pdfBytes = await generateEmployeePdf(startDate, endDate, emp, entries, allEntries);
         // Filename: Name_YYYY-MM-DD_bis_YYYY-MM-DD.pdf
         const filename = `${emp.name.replace(/[^a-z0-9]/gi, '_')}_${startDate}_bis_${endDate}.pdf`;
         folder.file(filename, pdfBytes);

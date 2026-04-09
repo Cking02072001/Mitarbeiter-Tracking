@@ -74,6 +74,11 @@ class DatabaseService {
         return db.getAllFromIndex('entries', 'by-date', range);
     }
 
+    async getAllEntries(): Promise<AbsenceEntry[]> {
+        const db = await this.dbPromise;
+        return db.getAll('entries');
+    }
+
     async getEntry(employeeId: string, date: string): Promise<AbsenceEntry | undefined> {
         const db = await this.dbPromise;
         return db.getFromIndex('entries', 'by-employee-date', [employeeId, date]);

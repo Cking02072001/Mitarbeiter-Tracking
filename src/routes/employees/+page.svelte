@@ -43,7 +43,7 @@
 		await appState.refreshEmployees();
 	}
 
-	async function updateField(emp: Employee, field: 'name' | 'jobTitle' | 'workingHours', e: Event) {
+	async function updateField(emp: Employee, field: 'name' | 'jobTitle' | 'workingHours' | 'firstWorkDay' | 'lastWorkDay', e: Event) {
 		const target = e.target as HTMLInputElement;
 		emp[field] = target.value;
 		await dbService.saveEmployee(JSON.parse(JSON.stringify(emp)));
@@ -92,6 +92,28 @@
 							class="sub-input"
 							placeholder="Arbeitszeit (z.B. 8 - 12 Uhr)"
 						/>
+						<div class="date-group">
+							<div class="input-wrap">
+								<label for="first_{emp.id}">Erster Arbeitstag:</label>
+								<input
+									id="first_{emp.id}"
+									type="date"
+									value={emp.firstWorkDay || ''}
+									onchange={(e) => updateField(emp, 'firstWorkDay', e)}
+									class="date-input"
+								/>
+							</div>
+							<div class="input-wrap">
+								<label for="last_{emp.id}">Letzter Arbeitstag:</label>
+								<input
+									id="last_{emp.id}"
+									type="date"
+									value={emp.lastWorkDay || ''}
+									onchange={(e) => updateField(emp, 'lastWorkDay', e)}
+									class="date-input"
+								/>
+							</div>
+						</div>
 					</div>
 
 					<div class="actions">
@@ -193,6 +215,31 @@
 			border-bottom: 1px solid #2563eb;
 			color: #111827;
 		}
+	}
+	.date-group {
+		display: flex;
+		gap: 1rem;
+		margin-top: 0.25rem;
+	}
+	.input-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		
+		label {
+			font-size: 0.75rem;
+			color: #6b7280;
+			font-weight: 500;
+		}
+	}
+	.date-input {
+		padding: 0.25rem 0.5rem;
+		font-size: 0.85rem;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		color: #374151;
+		background: #f9fafb;
+		max-width: 140px;
 	}
 	.actions {
 		display: flex;

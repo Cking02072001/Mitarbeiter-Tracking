@@ -20,9 +20,10 @@
 		loading = true;
 		try {
 			const entries = await dbService.getEntriesByDateRange(startDate, endDate);
+			const allEntries = await dbService.getAllEntries();
 			const employees = await dbService.getEmployees();
 
-			const blob = await generateAllReportsZip(startDate, endDate, employees, entries);
+			const blob = await generateAllReportsZip(startDate, endDate, employees, entries, allEntries);
 
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
