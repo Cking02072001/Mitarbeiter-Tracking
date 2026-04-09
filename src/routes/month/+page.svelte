@@ -6,9 +6,11 @@
 	import { dbService } from '$lib/db';
 	import { v4 as uuidv4 } from 'uuid';
 	import { base } from '$app/paths';
+	import Holidays from 'date-holidays';
 
 	let month = $state(new Date().getMonth());
 	let year = $state(new Date().getFullYear());
+	let holidays = $state(new Set<number>());
 
 	const months = Array.from({ length: 12 }, (_, i) => {
 		return format(new Date(2000, i, 1), 'MMMM', { locale: de });
@@ -35,6 +37,19 @@
 
 	$effect(() => {
 		load();
+		
+		const hd = new Holidays('AT');
+		const hols = hd.getHolidays(year);
+		const days = new Set<number>();
+		for (const h of hols) {
+			if (h.type === 'public') {
+				const hdDate = new Date(h.start);
+				if (hdDate.getMonth() === month && hdDate.getFullYear() === year) {
+					days.add(hdDate.getDate());
+				}
+			}
+		}
+		holidays = days;
 	});
 
 	function getEntry(empId: string, d: number) {
@@ -88,8 +103,8 @@
 		load();
 	}
 
-	function getCellClass(entry: any) {
-		if (!entry) return 'bg-white';
+	function getCellClass(entry: any, d: number) {
+		if (!entry) return holidays.has(d) ? 'bg-yellow-100' : 'bg-white';
 		switch (entry.category) {
 			case AbsenceType.FREE:
 				return 'bg-green-200';
@@ -133,7 +148,7 @@
 				<tr>
 					<th class="sticky-col">Mitarbeiter</th>
 					{#each getDayLabels(year, month) as d}
-						<th class:weekend={['Sa', 'So'].includes(getWeekdayLabel(year, month, d))}>
+						<th class:weekend={['Sa', 'So'].includes(getWeekdayLabel(year, month, d))} class:holiday={holidays.has(d)}>
 							<div class="th-content">
 								<span class="weekday">{getWeekdayLabel(year, month, d)}</span>
 								<span class="day-num">{d}</span>
@@ -148,7 +163,7 @@
 						<td class="sticky-col">{emp.name}</td>
 						{#each getDayLabels(year, month) as d}
 							{@const entry = getEntry(emp.id, d)}
-							<td class="cell {getCellClass(entry)}" onclick={() => handleCellClick(emp.id, d)}>
+							<td class="cell {getCellClass(entry, d)}" onclick={() => handleCellClick(emp.id, d)}>
 								{getCellText(entry)}
 							</td>
 						{/each}
@@ -247,6 +262,10 @@
 		background-color: #f9fafb;
 		color: #ef4444; /* Highlight weekends slightly */
 	}
+	th.holiday {
+		background-color: #fef08a; /* light yellow */
+		color: #a16207;
+	}
 
 	.cell {
 		transition: background 0.1s;
@@ -266,5 +285,8 @@
 	.bg-red-200 {
 		background: #fecaca;
 		color: #991b1b;
+	}
+	.bg-yellow-100 {
+		background: #fef08a;
 	}
 </style>

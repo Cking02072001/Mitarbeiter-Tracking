@@ -8,27 +8,26 @@
 	import { Loader2 } from 'lucide-svelte';
 	import { base } from '$app/paths';
 
-	let month = $state(new Date().getMonth() + 1);
-	let year = $state(new Date().getFullYear());
-	let loading = $state(false);
+	let now = new Date();
+	let startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+	let endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-	const months = Array.from({ length: 12 }, (_, i) => ({
-		value: i + 1,
-		label: format(new Date(2000, i, 1), 'MMMM', { locale: de })
-	}));
+	let startDate = $state(format(startOfMonth, 'yyyy-MM-dd'));
+	let endDate = $state(format(endOfMonth, 'yyyy-MM-dd'));
+	let loading = $state(false);
 
 	async function downloadZip() {
 		loading = true;
 		try {
-			const entries = await dbService.getEntriesByMonth(year, month);
+			const entries = await dbService.getEntriesByDateRange(startDate, endDate);
 			const employees = await dbService.getEmployees();
 
-			const blob = await generateAllReportsZip(year, month, employees, entries);
+			const blob = await generateAllReportsZip(startDate, endDate, employees, entries);
 
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `Abwesenheiten_${year}-${String(month).padStart(2, '0')}.zip`;
+			a.download = `Abwesenheiten_${startDate}_bis_${endDate}.zip`;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
@@ -50,17 +49,13 @@
 
 	<div class="card">
 		<div class="form-group">
-			<label for="month">Monat</label>
-			<select id="month" bind:value={month}>
-				{#each months as m}
-					<option value={m.value}>{m.label}</option>
-				{/each}
-			</select>
+			<label for="startDate">Startdatum</label>
+			<input type="date" id="startDate" bind:value={startDate} />
 		</div>
 
 		<div class="form-group">
-			<label for="year">Jahr</label>
-			<input type="number" id="year" bind:value={year} />
+			<label for="endDate">Enddatum</label>
+			<input type="date" id="endDate" bind:value={endDate} />
 		</div>
 
 		<button onclick={downloadZip} disabled={loading} class="btn-primary">

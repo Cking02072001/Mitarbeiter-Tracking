@@ -6,7 +6,7 @@ interface AppDB extends DBSchema {
     employees: {
         key: string;
         value: Employee;
-        indexes: { 'by-active': boolean };
+        indexes: { 'by-active': number };
     };
     entries: {
         key: string;
@@ -64,6 +64,12 @@ class DatabaseService {
         // Calculate last day of month
         const lastDay = new Date(year, month, 0).getDate();
         const end = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+        const range = IDBKeyRange.bound(start, end);
+        return db.getAllFromIndex('entries', 'by-date', range);
+    }
+
+    async getEntriesByDateRange(start: string, end: string): Promise<AbsenceEntry[]> {
+        const db = await this.dbPromise;
         const range = IDBKeyRange.bound(start, end);
         return db.getAllFromIndex('entries', 'by-date', range);
     }
