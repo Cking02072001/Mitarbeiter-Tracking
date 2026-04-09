@@ -251,7 +251,7 @@ export async function generateEmployeePdf(
 
         let vacationTaken = 0;
         for (const e of relevantAllEntries) {
-            if (e.category === AbsenceType.VACATION) {
+            if (e.category === AbsenceType.VACATION || e.category === AbsenceType.FREE) {
                 vacationTaken += (e.duration === Duration.FULL ? 1 : 0.5);
             }
         }
@@ -283,7 +283,7 @@ export async function generateEmployeePdf(
         y -= 20;
         currentPage.drawText('Urlaubsabrechnung (Erster bis letzter Arbeitstag)', { x: 50, y, size: 12, font: fontBold });
         y -= 20;
-        currentPage.drawText(`Berechnung: ${sundayCount} Sonntage + ${holidaysWorked} gearbeitete Feiertage - ${vacationTaken} Urlaubstage`, { x: 50, y, size: 10, font: font });
+        currentPage.drawText(`Berechnung: ${sundayCount} Sonntage + ${holidaysWorked} gearbeitete Feiertage - ${vacationTaken} Freie Tage / Urlaubstage`, { x: 50, y, size: 10, font: font });
         y -= 15;
         currentPage.drawText(`Ergebnis: ${resultText}`, { x: 50, y, size: 12, font: fontBold, color: rgb(0.1, 0.5, 0.8) });
         y -= 30;
